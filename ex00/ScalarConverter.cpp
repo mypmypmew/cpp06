@@ -33,8 +33,11 @@ static bool isCharLiteral(const std::string& s) {
 }
 
 static LiteralType detectType(const std::string& s) {
-    if (isPseudoDouble(s)) return TYPE_PSEUDO_DOUBLE;
-    if (isPseudoFloat(s))  return TYPE_PSEUDO_FLOAT;
-    if (isCharLiteral(s))  return TYPE_CHAR;
+    if (isPseudoDouble(s)) 
+        return TYPE_PSEUDO_DOUBLE;
+    if (isPseudoFloat(s))  
+        return TYPE_PSEUDO_FLOAT;
+    if (isCharLiteral(s))  
+        return TYPE_CHAR;
     return TYPE_INVALID;
 }
