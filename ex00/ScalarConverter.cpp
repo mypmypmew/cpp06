@@ -52,13 +52,65 @@ void ScalarConverter::convert(const std::string& s) {
         } else {
             std::cout << "int: " << "impossible" << "\n";
         }
-        std::cout << "float: " << v << ".0f" << "\n";
-        std::cout << "double: " << v << ".0" << "\n";
+        std::cout << "float: " << static_cast<float>(v) << ".0f" << "\n";
+        std::cout << "double: " << static_cast<double>(v) << ".0" << "\n";
         break;
     }
-    case TYPE_FLOAT:
-        break;
+    case TYPE_FLOAT: {
+        float f = std::strtof(s.c_str(), 0);
+        if (f == static_cast<float>(static_cast<long long>(f))) {
+            long long fi = static_cast<long long>(f);
+            if (fi < 0 || fi > 127) {
+                std::cout << "char: " << "impossible" << "\n";
+            } else if(!std::isprint(static_cast<unsigned char>(fi))) {
+                std::cout << "char: " << "Non displayable" << "\n";
+            } else {
+             std::cout << "char: '" << static_cast<char>(fi) << "'\n";
+            }
+            
+            if (fi >= INT_MIN && fi <= INT_MAX) {
+                std::cout << "int: " << static_cast<int>(fi) << "\n";
+            } else {
+                std::cout << "int: " << "impossible" << "\n";
+            }
+
+            std::cout << "float: " << fi << ".0f" << "\n";
+            std::cout << "double: " << fi << ".0\n";
+        } else {
+            std::cout << "char: " << "impossible" << "\n";
+            std::cout << "int: " << "impossible" << "\n";
+            std::cout << "float: " << f << "f" << "\n"; 
+            std::cout << "double: " << static_cast<double>(f) << "\n";
+        }
+         break;
+    }
     case TYPE_DOUBLE: {
+        double d = std::strtod(s.c_str(), 0);
+        if (d == static_cast<double>(static_cast<long long>(d))) {
+            long long di = static_cast<long long>(d);
+            if (di < 0 || di > 127) {
+                std::cout << "char: " << "impossible" << "\n";
+            } else if(!std::isprint(static_cast<unsigned char>(di))) {
+                std::cout << "char: " << "Non displayable" << "\n";
+            } else {
+             std::cout << "char: '" << static_cast<char>(di) << "'\n";
+            }
+            
+            if (di >= INT_MIN && di <= INT_MAX) {
+                std::cout << "int: " << static_cast<int>(di) << "\n";
+            } else {
+                std::cout << "int: " << "impossible" << "\n";
+            }
+
+            std::cout << "float: " << di << ".0f" << "\n";
+            std::cout << "double: " << di << ".0\n";
+        } else {
+            std::cout << "char: " << "impossible" << "\n";
+            std::cout << "int: " << "impossible" << "\n";
+            std::cout << "float: " << static_cast<float>(d) << "f" << "\n"; 
+            std::cout << "double: " << d << "\n";
+        }
+
         break;
     }
     case TYPE_PSEUDO_FLOAT:
