@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cctype>
 #include <string>
+#include <cstdlib>
+#include <climits>
 
 enum LiteralType {
     TYPE_CHAR,
@@ -21,7 +23,65 @@ static LiteralType detectType(const std::string& s);
 
 void ScalarConverter::convert(const std::string& s) {
     LiteralType t = detectType(s);
-    std::cout << "detected=" << t << "\n";
+    long v = std::strtol(s.c_str(), 0, 10);
+
+    switch (t)
+    {
+    case TYPE_CHAR: {
+        unsigned char c = static_cast<unsigned char>(s[0]);
+        if(!std::isprint(c)) {
+            std::cout << "char: " << "Non displayable" << "\n";
+        } else {
+         std::cout << "char: " <<  "'" << c << "'" << "\n";
+        }
+        std::cout << "int: " << static_cast<int>(c) << "\n";
+        std::cout << "float: " << static_cast<float>(c) << ".0f\n";
+        std::cout << "double: " << static_cast<double>(c) << ".0\n";
+        break;
+    }
+    case TYPE_INT: {
+        if (v < 0 || v > 127) {
+            std::cout << "char: " << "impossible" << "\n";
+        } else if(!std::isprint(static_cast<unsigned char>(v))) {
+            std::cout << "char: " << "Non displayable" << "\n";
+        } else {
+             std::cout << "char: '" << static_cast<char>(v) << "'\n";
+        }
+        if (v >= INT_MIN && v <= INT_MAX) {
+            std::cout << "int: " << v << "\n";
+        } else {
+            std::cout << "int: " << "impossible" << "\n";
+        }
+        std::cout << "float: " << v << ".0f" << "\n";
+        std::cout << "double: " << v << ".0" << "\n";
+        break;
+    }
+    case TYPE_FLOAT:
+        break;
+    case TYPE_DOUBLE: {
+        break;
+    }
+    case TYPE_PSEUDO_FLOAT:
+        std::cout << "char: " << "impossible" << "\n";
+        std::cout << "int: " << "impossible" << "\n";
+        std::cout << "float: " << s << "\n";
+        std::cout << "double: " << s.substr(0, s.size() - 1) << "\n";
+        break;    
+    case TYPE_PSEUDO_DOUBLE:
+        std::cout << "char: " << "impossible" << "\n";
+        std::cout << "int: " << "impossible" << "\n";
+        std::cout << "float: " << s << "f\n";
+        std::cout << "double: " << s << "\n";
+        break;
+    case TYPE_INVALID:
+        std::cout << "char: " << "impossible" << "\n";
+        std::cout << "int: " << "impossible" << "\n";
+        std::cout << "float: " << "impossible" << "\n";
+        std::cout << "double: " << "impossible" << "\n";
+        break;
+    default:
+        break;
+    }
 }
 
 static bool isPseudoDouble(const std::string& s) {
