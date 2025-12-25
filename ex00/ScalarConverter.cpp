@@ -4,6 +4,8 @@
 #include <string>
 #include <cstdlib>
 #include <climits>
+#include <cerrno>
+
 
 enum LiteralType {
     TYPE_CHAR,
@@ -15,6 +17,58 @@ enum LiteralType {
     TYPE_INVALID
 };
 
+
+static bool parseLongStrict(const std::string& s, long& out) {
+    errno = 0;
+    char* end = 0;
+    const char* start = s.c_str();
+    long v = std::strtol(start, &end, 10);
+
+    if (start == end)
+        return false;
+    if (*end != '\0')    
+        return false;
+    if (errno == ERANGE) 
+        return false;
+
+    out = v;
+    return true;
+}
+
+static bool parseDoubleStrict(const std::string& s, double& out) {
+    errno = 0;
+    char* end = 0;
+    const char* start = s.c_str();
+    double v = std::strtod(start, &end);
+
+    if (start == end)    
+        return false;
+    if (*end != '\0')    
+        return false;
+    if (errno == ERANGE) 
+        return false;
+
+    out = v;
+    return true;
+}
+
+static bool parseFloatStrict(const std::string& s, float& out) {
+    errno = 0;
+    char* end = 0;
+    const char* start = s.c_str();
+    float v = std::strtof(start, &end);
+
+    if (start == end)    
+        return false;
+    if (*end != '\0')    
+        return false;
+    if (errno == ERANGE) 
+        return false;
+
+    out = v;
+    return true;
+}
+
 static bool isPseudoDouble(const std::string& s);
 static bool isPseudoFloat(const std::string& s);
 static bool isCharLiteral(const std::string& s);
@@ -23,7 +77,6 @@ static LiteralType detectType(const std::string& s);
 
 void ScalarConverter::convert(const std::string& s) {
     LiteralType t = detectType(s);
-    long v = std::strtol(s.c_str(), 0, 10);
 
     switch (t)
     {
@@ -35,11 +88,19 @@ void ScalarConverter::convert(const std::string& s) {
          std::cout << "char: " <<  "'" << c << "'" << "\n";
         }
         std::cout << "int: " << static_cast<int>(c) << "\n";
-        std::cout << "float: " << static_cast<float>(c) << ".0f\n";
-        std::cout << "double: " << static_cast<double>(c) << ".0\n";
+        std::cout << "float: " << static_cast<int>(c) << ".0f\n";
+        std::cout << "double: " << static_cast<int>(c) << ".0\n";
         break;
     }
     case TYPE_INT: {
+        long v;
+        if (!parseLongStrict(s, v)) {
+            std::cout << "char: " << "impossible" << "\n";
+            std::cout << "int: " << "impossible" << "\n";            
+            std::cout << "float: " << "impossible" << "\n";
+            std::cout << "double: " << "impossible" << "\n";
+            break;
+        }
         if (v < 0 || v > 127) {
             std::cout << "char: " << "impossible" << "\n";
         } else if(!std::isprint(static_cast<unsigned char>(v))) {
@@ -57,7 +118,14 @@ void ScalarConverter::convert(const std::string& s) {
         break;
     }
     case TYPE_FLOAT: {
-        float f = std::strtof(s.c_str(), 0);
+        float f;
+        if (!parseFloatStrict(s, f)) {
+            std::cout << "char: " << "impossible" << "\n";
+            std::cout << "int: " << "impossible" << "\n";            
+            std::cout << "float: " << "impossible" << "\n";
+            std::cout << "double: " << "impossible" << "\n";
+            break;
+        }
         if (f == static_cast<float>(static_cast<long long>(f))) {
             long long fi = static_cast<long long>(f);
             if (fi < 0 || fi > 127) {
@@ -85,7 +153,14 @@ void ScalarConverter::convert(const std::string& s) {
          break;
     }
     case TYPE_DOUBLE: {
-        double d = std::strtod(s.c_str(), 0);
+        double d;
+        if (!parseDoubleStrict(s, d)) {
+            std::cout << "char: " << "impossible" << "\n";
+            std::cout << "int: " << "impossible" << "\n";            
+            std::cout << "float: " << "impossible" << "\n";
+            std::cout << "double: " << "impossible" << "\n";
+            break;
+        }
         if (d == static_cast<double>(static_cast<long long>(d))) {
             long long di = static_cast<long long>(d);
             if (di < 0 || di > 127) {
