@@ -7,6 +7,8 @@
 #include <cerrno>
 #include <cmath>
 #include <limits>
+#include <iomanip>
+
 
 
 enum LiteralType {
@@ -24,6 +26,14 @@ static void printImpossible() {
     std::cout << "int: " << "impossible" << "\n";            
     std::cout << "float: " << "impossible" << "\n";
     std::cout << "double: " << "impossible" << "\n";
+}
+
+static void printFixed1(double x) {
+    std::ios::fmtflags f = std::cout.flags();
+    std::streamsize p = std::cout.precision();
+    std::cout << std::fixed << std::setprecision(1) << x;
+    std::cout.flags(f);
+    std::cout.precision(p);
 }
 
 static bool parseLongStrict(const std::string& s, long& out) {
@@ -76,7 +86,7 @@ void ScalarConverter::convert(const std::string& s) {
         if(!std::isprint(c)) {
             std::cout << "char: " << "Non displayable" << "\n";
         } else {
-         std::cout << "char: " <<  "'" << c << "'" << "\n";
+         std::cout << "char: " <<  "'" << static_cast<char>(c) << "'" << "\n";
         }
         std::cout << "int: " << static_cast<int>(c) << "\n";
         std::cout << "float: " << static_cast<int>(c) << ".0f\n";
@@ -86,9 +96,44 @@ void ScalarConverter::convert(const std::string& s) {
     case TYPE_INT: {
         long v;
         if (!parseLongStrict(s, v)) {
+
+        double d;
+        if (!parseDoubleStrict(s, d)) {
             printImpossible();
             break;
         }
+
+        std::cout << "char: impossible\n";
+        std::cout << "int: impossible\n";
+
+        if (std::fabs(d) > std::numeric_limits<float>::max()) {
+            std::cout << "float: impossible\n";
+        } else {
+            float f = static_cast<float>(d);
+            double ip;
+            bool intLike = (std::modf(d, &ip) == 0.0);
+            std::cout << "float: ";
+            if (intLike) {
+                printFixed1(static_cast<double>(f));
+                std::cout << "f\n";
+            } else {
+                std::cout << f << "f\n";
+            }
+        }
+
+        {
+            double ip;
+            bool intLike = (std::modf(d, &ip) == 0.0);
+            std::cout << "double: ";
+            if (intLike) {
+                printFixed1(d);
+                std::cout << "\n";
+            } else {
+                std::cout << d << "\n";
+            }
+        }
+        break;
+    }
         if (v < 0 || v > 127) {
             std::cout << "char: " << "impossible" << "\n";
         } else if(!std::isprint(static_cast<unsigned char>(v))) {
@@ -97,12 +142,17 @@ void ScalarConverter::convert(const std::string& s) {
              std::cout << "char: '" << static_cast<char>(v) << "'\n";
         }
         if (v >= INT_MIN && v <= INT_MAX) {
-            std::cout << "int: " << v << "\n";
+            std::cout << "int: " << static_cast<int>(v) << "\n";
         } else {
             std::cout << "int: " << "impossible" << "\n";
         }
-        std::cout << "float: " << v << ".0f" << "\n";
-        std::cout << "double: " << v << ".0" << "\n";
+        std::cout << "float: ";
+        printFixed1(static_cast<double>(static_cast<float>(v)));
+        std::cout << "f\n";
+
+        std::cout << "double: ";
+        printFixed1(static_cast<double>(v));
+        std::cout << "\n";
         break;
     }
     case TYPE_FLOAT: {
@@ -138,7 +188,9 @@ void ScalarConverter::convert(const std::string& s) {
             bool isIntLike = (std::modf(d, &ip) == 0.0);
 
             if (isIntLike) {
-                std::cout << "float: " << f << ".0f\n";
+                std::cout << "float: ";
+                printFixed1(f);
+                std::cout << "f\n";
             } else {
                 std::cout << "float: " << f << "f\n";
             }
@@ -148,7 +200,9 @@ void ScalarConverter::convert(const std::string& s) {
         double ip;
         bool isIntLike = (std::modf(d, &ip) == 0.0);
         if (isIntLike) {
-            std::cout << "double: " << d << ".0\n";
+            std::cout << "double: ";
+            printFixed1(d);
+            std::cout << "\n";
         } else {
             std::cout << "double: " << d << "\n";
         }
@@ -184,18 +238,27 @@ void ScalarConverter::convert(const std::string& s) {
         std::cout << "float: impossible\n";
     } else {
         float f = static_cast<float>(d);
-
         double ip;
         bool isIntLike = (std::modf(d, &ip) == 0.0);
-        if (isIntLike) std::cout << "float: " << f << ".0f\n";
-        else          std::cout << "float: " << f << "f\n";
+        if (isIntLike) {
+            std::cout << "float: ";
+            printFixed1(static_cast<double>(f));
+            std::cout << "f\n";
+        }
+        else         
+            std::cout << "float: " << f << "f\n";
     }
 
     {
         double ip;
         bool isIntLike = (std::modf(d, &ip) == 0.0);
-        if (isIntLike) std::cout << "double: " << d << ".0\n";
-        else          std::cout << "double: " << d << "\n";
+        if (isIntLike) {
+            std::cout << "double: ";
+            printFixed1(d);
+            std::cout << "\n";
+        }
+        else          
+        std::cout << "double: " << d << "\n";
     }
         break;
     }

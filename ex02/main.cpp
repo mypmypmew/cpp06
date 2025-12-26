@@ -52,8 +52,8 @@ int main() {
     std::srand(static_cast<unsigned>(std::time(NULL)));
 
     Base* p = generate();
-    identify(p);
-    identify(*p);
+    std::cout << "ptr: "; identify(p);
+    std::cout << "ref: "; identify(*p);
     delete p;
 
     return 0;
