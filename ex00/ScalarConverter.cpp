@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <climits>
 #include <cerrno>
+#include <cmath>
+#include <limits>
 
 
 enum LiteralType {
@@ -17,6 +19,12 @@ enum LiteralType {
     TYPE_INVALID
 };
 
+static void printImpossible() {
+    std::cout << "char: " << "impossible" << "\n";
+    std::cout << "int: " << "impossible" << "\n";            
+    std::cout << "float: " << "impossible" << "\n";
+    std::cout << "double: " << "impossible" << "\n";
+}
 
 static bool parseLongStrict(const std::string& s, long& out) {
     errno = 0;
@@ -40,23 +48,6 @@ static bool parseDoubleStrict(const std::string& s, double& out) {
     char* end = 0;
     const char* start = s.c_str();
     double v = std::strtod(start, &end);
-
-    if (start == end)    
-        return false;
-    if (*end != '\0')    
-        return false;
-    if (errno == ERANGE) 
-        return false;
-
-    out = v;
-    return true;
-}
-
-static bool parseFloatStrict(const std::string& s, float& out) {
-    errno = 0;
-    char* end = 0;
-    const char* start = s.c_str();
-    float v = std::strtof(start, &end);
 
     if (start == end)    
         return false;
@@ -95,10 +86,7 @@ void ScalarConverter::convert(const std::string& s) {
     case TYPE_INT: {
         long v;
         if (!parseLongStrict(s, v)) {
-            std::cout << "char: " << "impossible" << "\n";
-            std::cout << "int: " << "impossible" << "\n";            
-            std::cout << "float: " << "impossible" << "\n";
-            std::cout << "double: " << "impossible" << "\n";
+            printImpossible();
             break;
         }
         if (v < 0 || v > 127) {
@@ -113,21 +101,21 @@ void ScalarConverter::convert(const std::string& s) {
         } else {
             std::cout << "int: " << "impossible" << "\n";
         }
-        std::cout << "float: " << static_cast<float>(v) << ".0f" << "\n";
-        std::cout << "double: " << static_cast<double>(v) << ".0" << "\n";
+        std::cout << "float: " << v << ".0f" << "\n";
+        std::cout << "double: " << v << ".0" << "\n";
         break;
     }
     case TYPE_FLOAT: {
-        float f;
-        if (!parseFloatStrict(s, f)) {
-            std::cout << "char: " << "impossible" << "\n";
-            std::cout << "int: " << "impossible" << "\n";            
-            std::cout << "float: " << "impossible" << "\n";
-            std::cout << "double: " << "impossible" << "\n";
+        std::string base = s.substr(0, s.size() - 1);
+        double d;
+        if (!parseDoubleStrict(base, d)) {
+            printImpossible();
             break;
         }
-        if (f == static_cast<float>(static_cast<long long>(f))) {
-            long long fi = static_cast<long long>(f);
+
+        if (d >= static_cast<double>(INT_MIN) && d <= static_cast<double>(INT_MAX)) {
+            int fi = static_cast<int>(d);
+
             if (fi < 0 || fi > 127) {
                 std::cout << "char: " << "impossible" << "\n";
             } else if(!std::isprint(static_cast<unsigned char>(fi))) {
@@ -135,57 +123,80 @@ void ScalarConverter::convert(const std::string& s) {
             } else {
              std::cout << "char: '" << static_cast<char>(fi) << "'\n";
             }
-            
-            if (fi >= INT_MIN && fi <= INT_MAX) {
-                std::cout << "int: " << static_cast<int>(fi) << "\n";
-            } else {
-                std::cout << "int: " << "impossible" << "\n";
-            }
-
-            std::cout << "float: " << fi << ".0f" << "\n";
-            std::cout << "double: " << fi << ".0\n";
+            std::cout << "int: " << fi << "\n";
         } else {
             std::cout << "char: " << "impossible" << "\n";
             std::cout << "int: " << "impossible" << "\n";
-            std::cout << "float: " << f << "f" << "\n"; 
-            std::cout << "double: " << static_cast<double>(f) << "\n";
         }
-         break;
+
+        if (std::fabs(d) > std::numeric_limits<float>::max()) {
+            std::cout << "float: impossible\n";
+        } else {
+            float f = static_cast<float>(d);
+
+            double ip;
+            bool isIntLike = (std::modf(d, &ip) == 0.0);
+
+            if (isIntLike) {
+                std::cout << "float: " << f << ".0f\n";
+            } else {
+                std::cout << "float: " << f << "f\n";
+            }
+        }
+
+    {
+        double ip;
+        bool isIntLike = (std::modf(d, &ip) == 0.0);
+        if (isIntLike) {
+            std::cout << "double: " << d << ".0\n";
+        } else {
+            std::cout << "double: " << d << "\n";
+        }
+    }
+
+    break;
+
     }
     case TYPE_DOUBLE: {
         double d;
         if (!parseDoubleStrict(s, d)) {
-            std::cout << "char: " << "impossible" << "\n";
-            std::cout << "int: " << "impossible" << "\n";            
-            std::cout << "float: " << "impossible" << "\n";
-            std::cout << "double: " << "impossible" << "\n";
+            printImpossible();
             break;
         }
-        if (d == static_cast<double>(static_cast<long long>(d))) {
-            long long di = static_cast<long long>(d);
-            if (di < 0 || di > 127) {
-                std::cout << "char: " << "impossible" << "\n";
-            } else if(!std::isprint(static_cast<unsigned char>(di))) {
-                std::cout << "char: " << "Non displayable" << "\n";
-            } else {
-             std::cout << "char: '" << static_cast<char>(di) << "'\n";
-            }
-            
-            if (di >= INT_MIN && di <= INT_MAX) {
-                std::cout << "int: " << static_cast<int>(di) << "\n";
-            } else {
-                std::cout << "int: " << "impossible" << "\n";
-            }
 
-            std::cout << "float: " << di << ".0f" << "\n";
-            std::cout << "double: " << di << ".0\n";
+        if (d >= static_cast<double>(INT_MIN) && d <= static_cast<double>(INT_MAX)) {
+            int di = static_cast<int>(d);
+
+            if (di < 0 || di > 127) {
+                std::cout << "char: impossible\n";
+            } else if (!std::isprint(static_cast<unsigned char>(di))) {
+                std::cout << "char: Non displayable\n";
+            } else {
+                std::cout << "char: '" << static_cast<char>(di) << "'\n";
+            }
+            std::cout << "int: " << di << "\n";
         } else {
-            std::cout << "char: " << "impossible" << "\n";
-            std::cout << "int: " << "impossible" << "\n";
-            std::cout << "float: " << static_cast<float>(d) << "f" << "\n"; 
-            std::cout << "double: " << d << "\n";
+            std::cout << "char: impossible\n";
+            std::cout << "int: impossible\n";
         }
 
+    if (std::fabs(d) > std::numeric_limits<float>::max()) {
+        std::cout << "float: impossible\n";
+    } else {
+        float f = static_cast<float>(d);
+
+        double ip;
+        bool isIntLike = (std::modf(d, &ip) == 0.0);
+        if (isIntLike) std::cout << "float: " << f << ".0f\n";
+        else          std::cout << "float: " << f << "f\n";
+    }
+
+    {
+        double ip;
+        bool isIntLike = (std::modf(d, &ip) == 0.0);
+        if (isIntLike) std::cout << "double: " << d << ".0\n";
+        else          std::cout << "double: " << d << "\n";
+    }
         break;
     }
     case TYPE_PSEUDO_FLOAT:
